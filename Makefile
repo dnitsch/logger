@@ -1,8 +1,8 @@
 
 OWNER := dnitsch
 NAME := simplelog
-GIT_TAG := "1.0.0"
-VERSION := "v1.0.0"
+GIT_TAG := "1.1.0"
+VERSION := "v$(GIT_TAG)"
 # VERSION := "$(shell git describe --tags --abbrev=0)"
 REVISION := $(shell git rev-parse --short HEAD)
 
