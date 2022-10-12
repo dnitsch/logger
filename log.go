@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/rs/zerolog"
-	// zlog "github.com/rs/zerolog/log"
 )
 
 type LogLevel string
@@ -47,13 +46,12 @@ func New(writer io.Writer, lvl LogLevel) Logger {
 		fmt.Printf("loggerFailed: %v. setting error level", err)
 		locallvl = ErrorLvl
 	}
-	// zerolog.CallerMarshalFunc = lShortMarshall()
-	// zlog
-	l := zerolog.New(writer).With().Timestamp().CallerWithSkipFrameCount(zerolog.CallerSkipFrameCount).Logger()
-	l.Level(zloglvl)
+
+	zerolog.CallerMarshalFunc = lShortMarshall()
+	zl := zerolog.New(writer).With().Timestamp().CallerWithSkipFrameCount(zerolog.CallerSkipFrameCount + 1).Logger().Level(zloglvl)
 
 	return Logger{
-		logger: l,
+		logger: zl,
 		lvl:    locallvl,
 		writer: writer,
 	}
@@ -80,7 +78,7 @@ func ParseLevel(lvl string) LogLevel {
 }
 
 func (l Logger) Debugf(format string, args ...any) {
-	l.Debug(fmt.Sprintf(format, args...))
+	l.logger.Debug().Msg(fmt.Sprintf(format, args...))
 }
 
 func (l Logger) Debug(msg string) {
@@ -88,7 +86,7 @@ func (l Logger) Debug(msg string) {
 }
 
 func (l Logger) Infof(format string, args ...any) {
-	l.Info(fmt.Sprintf(format, args...))
+	l.logger.Info().Msg(fmt.Sprintf(format, args...))
 }
 
 func (l Logger) Info(msg string) {
@@ -96,7 +94,7 @@ func (l Logger) Info(msg string) {
 }
 
 func (l Logger) Errorf(format string, args ...any) {
-	l.Error(fmt.Errorf(format, args...))
+	l.logger.Error().Err(fmt.Errorf(format, args...)).Msg("")
 }
 
 func (l Logger) Error(err error) {
@@ -106,6 +104,9 @@ func (l Logger) Error(err error) {
 func lShortMarshall() func(pc uintptr, file string, line int) string {
 	return func(pc uintptr, file string, line int) string {
 		short := strings.Split(file, "/")
-		return fmt.Sprintf("%s:%v", short[len(short)-1], line)
+		if len(short) > 1 {
+			return fmt.Sprintf("%s:%v", short[len(short)-1], line)
+		}
+		return fmt.Sprintf("%s:%v", file, line)
 	}
 }
