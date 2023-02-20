@@ -1,135 +1,218 @@
-package log
+package log_test
 
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"strings"
 	"testing"
+
+	log "github.com/dnitsch/simplelog"
 )
 
 var (
-	TestPhrase = "Want %v, Got: %v"
+	TestPhrase = `%s 
+	got: %v
+	want %v`
 )
 
-func Test_LogDebug(t *testing.T) {
-	tests := []struct {
-		name        string
-		level       LogLevel
-		logMethod   func(msg string)
-		message     string
-		expectEmpty bool
+func TestParseLeve(t *testing.T) {
+	ttests := map[string]struct {
+		levelStr string
+		expect   log.LogLevel
 	}{
-		{
-			name:        "debug at debug",
-			level:       DebugLvl,
-			message:     "write me out...",
-			expectEmpty: false,
+		"info": {
+			"info", log.InfoLvl,
 		},
-		{
-			name:        "debug at info",
-			level:       InfoLvl,
-			message:     "write me out...",
-			expectEmpty: true,
+		"debug": {
+			"debug", log.DebugLvl,
 		},
-		{
-			name:        "debug at error",
-			level:       ErrorLvl,
-			message:     "write me out...",
-			expectEmpty: true,
+		"error": {
+			"error", log.ErrorLvl,
+		},
+		"wrong": {
+			"wrong", log.LogLevel(""),
 		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var buf bytes.Buffer
-			l := New(&buf, tt.level)
-
-			l.Debug(tt.message)
-			s := buf.String()
-			if tt.expectEmpty && s != "" {
-				t.Errorf(TestPhrase, "", s)
-			}
-			if !tt.expectEmpty && !strings.Contains(s, `"level":"debug"`) {
-				t.Errorf("incorrect level or not set in msg: %s", s)
+	for name, tt := range ttests {
+		t.Run(name, func(t *testing.T) {
+			got := log.ParseLevel(tt.levelStr)
+			if got != tt.expect {
+				t.Errorf(TestPhrase, "log level incorrectly parsed", got, tt.expect)
 			}
 		})
 	}
 }
 
-func Test_LogInfo(t *testing.T) {
-	tests := []struct {
-		name        string
-		level       LogLevel
-		logMethod   func(msg string)
-		message     string
-		expectEmpty bool
+func TestLogNoFormat(t *testing.T) {
+	tests := map[string]struct {
+		level     log.LogLevel
+		logMethod func(logger log.Logger) func(msg string)
+		message   string
+		expect    string
 	}{
-		{
-			name:        "info at debug",
-			level:       DebugLvl,
-			message:     "write me out...",
-			expectEmpty: false,
+		"info at debug": {
+			log.DebugLvl,
+			func(logger log.Logger) func(msg string) {
+				return logger.Info
+			},
+			"write me out...",
+			`"message:"write me out..."`,
 		},
-		{
-			name:        "info at info",
-			level:       InfoLvl,
-			message:     "write me out...",
-			expectEmpty: false,
+		"info at info": {
+			log.InfoLvl,
+			func(logger log.Logger) func(msg string) {
+				return logger.Info
+			},
+			"write me out...",
+			`"message:"write me out..."`,
 		},
-		{
-			name:        "info at error",
-			level:       ErrorLvl,
-			message:     "write me out...",
-			expectEmpty: true,
+		"info at error": {
+			log.ErrorLvl,
+			func(logger log.Logger) func(msg string) {
+				return logger.Info
+			},
+			"write me out...",
+			``,
+		},
+		"debug at error": {
+			log.ErrorLvl,
+			func(logger log.Logger) func(msg string) {
+				return logger.Debug
+			},
+			"write me out...",
+			``,
 		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
 			var buf bytes.Buffer
-			l := New(&buf, tt.level)
-
-			l.Info(tt.message)
-			s := buf.String()
-			if tt.expectEmpty && s != "" {
-				t.Errorf(TestPhrase, "", s)
+			l := log.New(&buf, tt.level)
+			if l.Writer() == nil {
+				t.Errorf("expected Writer to not be <nil>")
 			}
-			if !tt.expectEmpty && !strings.Contains(s, `"level":"info"`) {
-				t.Errorf("incorrect level or not set in msg: %s", s)
+
+			if l.Level() == "" {
+				t.Errorf("expected Level to not be \"\"")
+			}
+
+			(tt.logMethod(l))(tt.message)
+
+			s := buf.String()
+			if len(tt.expect) > 0 && s != "" {
+				t.Errorf(TestPhrase, "non formatted input", s, tt.expect)
 			}
 		})
 	}
 }
 
-func Test_LogError(t *testing.T) {
-	tests := []struct {
-		name        string
-		level       LogLevel
-		logMethod   func(msg string)
+func TestLogFormatted(t *testing.T) {
+	tests := map[string]struct {
+		level     log.LogLevel
+		logMethod func(logger log.Logger) func(format string, args ...any)
+		message   string
+		expect    string
+	}{
+		"info at debug": {
+			log.DebugLvl,
+			func(logger log.Logger) func(format string, args ...any) {
+				return logger.Infof
+			},
+			"write me out...",
+			`"message:"write me out..."`,
+		},
+		"info at info": {
+			log.InfoLvl,
+			func(logger log.Logger) func(format string, args ...any) {
+				return logger.Infof
+			},
+			"write me out...",
+			`"message:"write me out..."`,
+		},
+		"info at error": {
+			log.ErrorLvl,
+			func(logger log.Logger) func(format string, args ...any) {
+				return logger.Infof
+			},
+			"write me out...",
+			``,
+		},
+		"debug at error": {
+			log.ErrorLvl,
+			func(logger log.Logger) func(format string, args ...any) {
+				return logger.Debugf
+			},
+			"write me out...",
+			``,
+		},
+		"error at debug": {
+			log.DebugLvl,
+			func(logger log.Logger) func(format string, args ...any) {
+				return logger.Errorf
+			},
+			"write me out...",
+			``,
+		},
+		"error at info": {
+			log.InfoLvl,
+			func(logger log.Logger) func(format string, args ...any) {
+				return logger.Errorf
+			},
+			"write me out...",
+			``,
+		},
+	}
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			var buf bytes.Buffer
+			l := log.New(&buf, tt.level)
+			if l.Writer() == nil {
+				t.Errorf("expected Writer to not be <nil>")
+			}
+
+			if l.Level() == "" {
+				t.Errorf("expected Level to not be \"\"")
+			}
+
+			(tt.logMethod(l))(tt.message)
+
+			s := buf.String()
+			if len(tt.expect) > 0 && s != "" {
+				t.Errorf(TestPhrase, "non formatted input", s, tt.expect)
+			}
+		})
+	}
+}
+
+func TestLogError(t *testing.T) {
+	tests := map[string]struct {
+		level       log.LogLevel
 		message     string
 		expectEmpty bool
 	}{
-		{
-			name:        "error at debug",
-			level:       DebugLvl,
+		"error at debug": {
+			level:       log.DebugLvl,
 			message:     "write me out...",
 			expectEmpty: false,
 		},
-		{
-			name:        "error at info",
-			level:       InfoLvl,
+		"error at info": {
+			level:       log.InfoLvl,
 			message:     "write me out...",
 			expectEmpty: false,
 		},
-		{
-			name:        "error at error",
-			level:       ErrorLvl,
+		"error at error": {
+			level:       log.ErrorLvl,
 			message:     "write me out...",
 			expectEmpty: false,
+		},
+		"unknown w/LogR": {
+			log.LogLevel("UNKNOWN"), "log me out", true,
 		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
 			var buf bytes.Buffer
-			l := New(&buf, tt.level)
+			l := log.New(&buf, tt.level)
 
 			l.Error(fmt.Errorf(tt.message))
 			s := buf.String()
@@ -138,6 +221,41 @@ func Test_LogError(t *testing.T) {
 			}
 			if !tt.expectEmpty && !strings.Contains(s, `"level":"error"`) {
 				t.Errorf("incorrect level or not set in msg: %s", s)
+			}
+		})
+	}
+}
+
+func TestLogrImp(t *testing.T) {
+	ttests := map[string]struct {
+		level         log.LogLevel
+		message       string
+		keysAndValues []any
+		expect        string
+	}{
+		"info w/LogR": {
+			log.InfoLvl, "log me out", []any{"bar", "pair"}, `"message":"log me out"`,
+		},
+		"err w/LogR": {
+			log.ErrorLvl, "log me out", []any{"bar", "pair"}, "",
+		},
+		"unknown w/LogR": {
+			log.LogLevel("UNKNOWN"), "log me out", []any{"bar", "pair"}, "",
+		},
+	}
+	for name, tt := range ttests {
+		t.Run(name, func(t *testing.T) {
+			buf := &bytes.Buffer{}
+			logr := log.NewLogr(buf, tt.level).WithCallDepth(-1)
+			logr.V(0).Info(tt.message, tt.keysAndValues...)
+
+			b, _ := io.ReadAll(buf)
+
+			if len(b) < 1 {
+				t.Errorf("got length: %d expected length to be longer than 0", len(b))
+			}
+			if len(tt.expect) > 0 && !strings.Contains(string(b), tt.expect) {
+				t.Errorf("got: %s wanted it to contain: %s", string(b), tt.expect)
 			}
 		})
 	}

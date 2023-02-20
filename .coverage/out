@@ -1,0 +1,22 @@
+mode: set
+github.com/dnitsch/simplelog/kubelogger.go:12.58,16.16 3 1
+github.com/dnitsch/simplelog/kubelogger.go:21.2,23.26 3 1
+github.com/dnitsch/simplelog/kubelogger.go:16.16,19.3 2 1
+github.com/dnitsch/simplelog/log.go:43.49,47.16 3 1
+github.com/dnitsch/simplelog/log.go:52.2,59.3 3 1
+github.com/dnitsch/simplelog/log.go:47.16,50.3 2 1
+github.com/dnitsch/simplelog/log.go:63.36,65.2 1 1
+github.com/dnitsch/simplelog/log.go:68.34,70.2 1 1
+github.com/dnitsch/simplelog/log.go:75.38,76.58 1 1
+github.com/dnitsch/simplelog/log.go:79.2,79.17 1 1
+github.com/dnitsch/simplelog/log.go:76.58,78.3 1 1
+github.com/dnitsch/simplelog/log.go:82.52,84.2 1 1
+github.com/dnitsch/simplelog/log.go:86.35,88.2 1 1
+github.com/dnitsch/simplelog/log.go:90.51,92.2 1 1
+github.com/dnitsch/simplelog/log.go:94.34,96.2 1 1
+github.com/dnitsch/simplelog/log.go:98.52,100.2 1 1
+github.com/dnitsch/simplelog/log.go:102.34,104.2 1 1
+github.com/dnitsch/simplelog/log.go:106.70,107.56 1 1
+github.com/dnitsch/simplelog/log.go:107.56,109.21 2 1
+github.com/dnitsch/simplelog/log.go:112.3,112.42 1 0
+github.com/dnitsch/simplelog/log.go:109.21,111.4 1 1

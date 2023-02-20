@@ -4,9 +4,7 @@ NAME := simplelog
 GIT_TAG := "1.5.1"
 VERSION := "v$(GIT_TAG)"
 # VERSION := "$(shell git describe --tags --abbrev=0)"
-REVISION := $(shell git rev-parse --short HEAD)
-
-LDFLAGS := -ldflags="-s -w -X \"github.com/$(OWNER)/$(NAME)/cmd/configmanager.Version=$(VERSION)\" -X \"github.com/$(OWNER)/$(NAME)/cmd/configmanager.Revision=$(REVISION)\" -extldflags -static"
+REVISION := "aaaa11111"
 
 .PHONY: test test_ci tidy install cross-build 
 
@@ -35,17 +33,9 @@ clean:
 	rm -rf dist/*
 	rm -rf vendor/*
 
-cross-build:
-	for os in darwin linux windows; do \
-	    [ $$os = "windows" ] && EXT=".exe"; \
-		GOOS=$$os CGO_ENABLED=0 go build -a -tags netgo -installsuffix netgo $(LDFLAGS) -o dist/$(NAME)-$$os$$EXT ./cmd; \
-	done
-
-release:
-	OWNER=$(OWNER) NAME=$(NAME) PAT=$(PAT) VERSION=$(VERSION) . hack/release.sh 
-
 tag: 
-	git tag "v$(GIT_TAG)"
-	git push origin "v$(GIT_TAG)"
+	git tag -a $(VERSION) -m "ci tag release logger" $(REVISION)
+	git push origin $(VERSION)
 
-tagbuildrelease: tag release
+show_coverage: test
+	go tool cover -html=.coverage/out

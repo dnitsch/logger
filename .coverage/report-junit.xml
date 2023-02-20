@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+	<testsuite tests="25" failures="11" time="0.278" name="github.com/dnitsch/simplelog">
+		<properties>
+			<property name="go.version" value="go1.19.5"></property>
+			<property name="coverage.statements.pct" value="96.9"></property>
+		</properties>
+		<testcase classname="simplelog" name="TestParseLeve" time="0.000">
+			<failure message="Failed" type=""></failure>
+		</testcase>
+		<testcase classname="simplelog" name="TestParseLeve/info" time="0.000"></testcase>
+		<testcase classname="simplelog" name="TestParseLeve/debug" time="0.000"></testcase>
+		<testcase classname="simplelog" name="TestParseLeve/error" time="0.000"></testcase>
+		<testcase classname="simplelog" name="TestParseLeve/wrong" time="0.000">
+			<failure message="Failed" type="">    log_test.go:41: log level incorrectly parsed </failure>
+		</testcase>
+		<testcase classname="simplelog" name="TestLogNoFormat" time="0.000">
+			<failure message="Failed" type=""></failure>
+		</testcase>
+		<testcase classname="simplelog" name="TestLogNoFormat/info_at_debug" time="0.000">
+			<failure message="Failed" type="">    log_test.go:103: non formatted input &#xA;        </failure>
+		</testcase>
+		<testcase classname="simplelog" name="TestLogNoFormat/info_at_info" time="0.000">
+			<failure message="Failed" type="">    log_test.go:103: non formatted input &#xA;        </failure>
+		</testcase>
+		<testcase classname="simplelog" name="TestLogNoFormat/info_at_error" time="0.000"></testcase>
+		<testcase classname="simplelog" name="TestLogNoFormat/debug_at_error" time="0.000"></testcase>
+		<testcase classname="simplelog" name="TestLogFormatted" time="0.000">
+			<failure message="Failed" type=""></failure>
+		</testcase>
+		<testcase classname="simplelog" name="TestLogFormatted/info_at_debug" time="0.000">
+			<failure message="Failed" type="">    log_test.go:181: non formatted input &#xA;        </failure>
+		</testcase>
+		<testcase classname="simplelog" name="TestLogFormatted/info_at_info" time="0.000">
+			<failure message="Failed" type="">    log_test.go:181: non formatted input &#xA;        </failure>
+		</testcase>
+		<testcase classname="simplelog" name="TestLogFormatted/info_at_error" time="0.000"></testcase>
+		<testcase classname="simplelog" name="TestLogFormatted/debug_at_error" time="0.000"></testcase>
+		<testcase classname="simplelog" name="TestLogFormatted/error_at_debug" time="0.000"></testcase>
+		<testcase classname="simplelog" name="TestLogFormatted/error_at_info" time="0.000"></testcase>
+		<testcase classname="simplelog" name="TestLogError" time="0.000"></testcase>
+		<testcase classname="simplelog" name="TestLogError/error_at_info" time="0.000"></testcase>
+		<testcase classname="simplelog" name="TestLogError/error_at_error" time="0.000"></testcase>
+		<testcase classname="simplelog" name="TestLogError/unknown_w/LogR" time="0.000"></testcase>
+		<testcase classname="simplelog" name="TestLogrImp" time="0.000">
+			<failure message="Failed" type=""></failure>
+		</testcase>
+		<testcase classname="simplelog" name="TestLogrImp/info_w/LogR" time="0.000"></testcase>
+		<testcase classname="simplelog" name="TestLogrImp/err_w/LogR" time="0.000">
+			<failure message="Failed" type="">    log_test.go:255: got length: 0 expected length to be longer than 0</failure>
+		</testcase>
+		<testcase classname="simplelog" name="TestLogrImp/unknown_w/LogR" time="0.000">
+			<failure message="Failed" type="">loggerFailed: Unknown Level String: &#39;UNKNOWN&#39;, defaulting to NoLevel. setting error level    log_test.go:255: got length: 0 expected length to be longer than 0</failure>
+		</testcase>
+	</testsuite>
+</testsuites>

@@ -38,6 +38,8 @@ type Logger struct {
 	writer io.Writer
 }
 
+// New returns a configured instance of ZeroLog
+// with minimal methods.
 func New(writer io.Writer, lvl LogLevel) Logger {
 	locallvl, zloglvl := lvl, zerolog.ErrorLevel
 
@@ -71,7 +73,7 @@ func (l Logger) Level() LogLevel {
 // If not found will default to error
 // possible values are `error`, `debug`, `info`
 func ParseLevel(lvl string) LogLevel {
-	if flvl, found := parseLvl[lvl]; found {
+	if flvl, found := parseLvl[strings.ToLower(lvl)]; found {
 		return flvl
 	}
 	return ErrorLvl
