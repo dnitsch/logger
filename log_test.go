@@ -31,7 +31,7 @@ func TestParseLeve(t *testing.T) {
 			"error", log.ErrorLvl,
 		},
 		"wrong": {
-			"wrong", log.LogLevel(""),
+			"wrong", log.ErrorLvl,
 		},
 	}
 	for name, tt := range ttests {
@@ -57,7 +57,7 @@ func TestLogNoFormat(t *testing.T) {
 				return logger.Info
 			},
 			"write me out...",
-			`"message:"write me out..."`,
+			`"message":"write me out..."`,
 		},
 		"info at info": {
 			log.InfoLvl,
@@ -65,7 +65,7 @@ func TestLogNoFormat(t *testing.T) {
 				return logger.Info
 			},
 			"write me out...",
-			`"message:"write me out..."`,
+			`"message":"write me out..."`,
 		},
 		"info at error": {
 			log.ErrorLvl,
@@ -98,9 +98,11 @@ func TestLogNoFormat(t *testing.T) {
 
 			(tt.logMethod(l))(tt.message)
 
-			s := buf.String()
-			if len(tt.expect) > 0 && s != "" {
-				t.Errorf(TestPhrase, "non formatted input", s, tt.expect)
+			b, _ := io.ReadAll(&buf)
+			if len(tt.expect) > 0 && string(b) != "" {
+				if !strings.Contains(string(b), tt.expect) {
+					t.Errorf(TestPhrase, "non formatted input", string(b), tt.expect)
+				}
 			}
 		})
 	}
@@ -119,7 +121,7 @@ func TestLogFormatted(t *testing.T) {
 				return logger.Infof
 			},
 			"write me out...",
-			`"message:"write me out..."`,
+			`"message":"write me out..."`,
 		},
 		"info at info": {
 			log.InfoLvl,
@@ -127,7 +129,7 @@ func TestLogFormatted(t *testing.T) {
 				return logger.Infof
 			},
 			"write me out...",
-			`"message:"write me out..."`,
+			`"message":"write me out..."`,
 		},
 		"info at error": {
 			log.ErrorLvl,
@@ -176,9 +178,9 @@ func TestLogFormatted(t *testing.T) {
 
 			(tt.logMethod(l))(tt.message)
 
-			s := buf.String()
-			if len(tt.expect) > 0 && s != "" {
-				t.Errorf(TestPhrase, "non formatted input", s, tt.expect)
+			b, _ := io.ReadAll(&buf)
+			if len(tt.expect) > 0 && !strings.Contains(string(b), tt.expect) {
+				t.Errorf(TestPhrase, "non formatted input", string(b), tt.expect)
 			}
 		})
 	}
@@ -186,27 +188,27 @@ func TestLogFormatted(t *testing.T) {
 
 func TestLogError(t *testing.T) {
 	tests := map[string]struct {
-		level       log.LogLevel
-		message     string
-		expectEmpty bool
+		level   log.LogLevel
+		message string
+		expect  string
 	}{
 		"error at debug": {
-			level:       log.DebugLvl,
-			message:     "write me out...",
-			expectEmpty: false,
+			level:   log.DebugLvl,
+			message: "write me out...",
+			expect:  `"message":"write me out..."`,
 		},
 		"error at info": {
-			level:       log.InfoLvl,
-			message:     "write me out...",
-			expectEmpty: false,
+			level:   log.InfoLvl,
+			message: "write me out...",
+			expect:  `"message":"write me out..."`,
 		},
 		"error at error": {
-			level:       log.ErrorLvl,
-			message:     "write me out...",
-			expectEmpty: false,
+			level:   log.ErrorLvl,
+			message: "write me out...",
+			expect:  `"message":"write me out..."`,
 		},
 		"unknown w/LogR": {
-			log.LogLevel("UNKNOWN"), "log me out", true,
+			log.LogLevel("UNKNOWN"), "log me out", "",
 		},
 	}
 	for name, tt := range tests {
@@ -216,11 +218,12 @@ func TestLogError(t *testing.T) {
 
 			l.Error(fmt.Errorf(tt.message))
 			s := buf.String()
-			if tt.expectEmpty && s != "" {
-				t.Errorf(TestPhrase, "", s)
+			if len(tt.expect) < 1 && s != "" {
+				t.Errorf(TestPhrase, "not empty", s, "")
 			}
-			if !tt.expectEmpty && !strings.Contains(s, `"level":"error"`) {
-				t.Errorf("incorrect level or not set in msg: %s", s)
+			if len(tt.expect) > 0 && !strings.Contains(s, `"level":"error"`) {
+				t.Errorf(TestPhrase, "error not computed correctly", s, `"level":"error"`)
+
 			}
 		})
 	}
@@ -229,33 +232,31 @@ func TestLogError(t *testing.T) {
 func TestLogrImp(t *testing.T) {
 	ttests := map[string]struct {
 		level         log.LogLevel
+		logrLevel     int
 		message       string
 		keysAndValues []any
 		expect        string
 	}{
 		"info w/LogR": {
-			log.InfoLvl, "log me out", []any{"bar", "pair"}, `"message":"log me out"`,
+			log.InfoLvl, 0, "log me out", []any{"bar", "pair"}, `"message":"log me out"`,
 		},
 		"err w/LogR": {
-			log.ErrorLvl, "log me out", []any{"bar", "pair"}, "",
+			log.ErrorLvl, 1, "log me out", []any{"bar", "pair"}, ``,
 		},
 		"unknown w/LogR": {
-			log.LogLevel("UNKNOWN"), "log me out", []any{"bar", "pair"}, "",
+			log.LogLevel("UNKNOWN"), 0, "log me out", []any{"bar", "pair"}, "",
 		},
 	}
 	for name, tt := range ttests {
 		t.Run(name, func(t *testing.T) {
 			buf := &bytes.Buffer{}
 			logr := log.NewLogr(buf, tt.level).WithCallDepth(-1)
-			logr.V(0).Info(tt.message, tt.keysAndValues...)
+			logr.V(tt.logrLevel).Info(tt.message, tt.keysAndValues...)
 
 			b, _ := io.ReadAll(buf)
 
-			if len(b) < 1 {
-				t.Errorf("got length: %d expected length to be longer than 0", len(b))
-			}
 			if len(tt.expect) > 0 && !strings.Contains(string(b), tt.expect) {
-				t.Errorf("got: %s wanted it to contain: %s", string(b), tt.expect)
+				t.Errorf(TestPhrase, "non formatted input", string(b), tt.expect)
 			}
 		})
 	}
