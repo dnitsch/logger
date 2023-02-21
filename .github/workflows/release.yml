@@ -52,7 +52,4 @@ jobs:
       - name: release library
         run: |
           make GIT_TAG=${SEMVER} REVISION=$GITHUB_SHA tag
-      - name: release binary
-        run: |
-          make REVISION=$GITHUB_SHA GIT_TAG=${SEMVER} PAT=${{ secrets.GITHUB_TOKEN }} cross-build
           make REVISION=$GITHUB_SHA GIT_TAG=${SEMVER} PAT=${{ secrets.GITHUB_TOKEN }} release

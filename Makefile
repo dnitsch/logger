@@ -33,6 +33,9 @@ clean:
 	rm -rf dist/*
 	rm -rf vendor/*
 
+release:
+	OWNER=$(OWNER) NAME=$(NAME) PAT=$(PAT) VERSION=$(VERSION) . hack/release.sh 
+
 tag: 
 	git tag -a $(VERSION) -m "ci tag release logger" $(REVISION)
 	git push origin $(VERSION)
