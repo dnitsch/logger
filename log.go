@@ -49,7 +49,6 @@ func New(writer io.Writer, lvl LogLevel) Logger {
 		locallvl = ErrorLvl
 	}
 
-	zerolog.CallerMarshalFunc = lShortMarshall()
 	zl := zerolog.New(writer).With().Timestamp().CallerWithSkipFrameCount(zerolog.CallerSkipFrameCount + 1).Logger().Level(zloglvl)
 
 	return Logger{
@@ -103,12 +102,12 @@ func (l Logger) Error(err error) {
 	l.logger.Error().Err(err).Msg("")
 }
 
-func lShortMarshall() func(pc uintptr, file string, line int) string {
-	return func(pc uintptr, file string, line int) string {
-		short := strings.Split(file, "/")
-		if len(short) > 1 {
-			return fmt.Sprintf("%s:%v", short[len(short)-1], line)
-		}
-		return fmt.Sprintf("%s:%v", file, line)
-	}
-}
+// func lShortMarshall() func(pc uintptr, file string, line int) string {
+// 	return func(pc uintptr, file string, line int) string {
+// 		short := strings.Split(file, "/")
+// 		if len(short) > 1 {
+// 			return fmt.Sprintf("%s:%v", short[len(short)-1], line)
+// 		}
+// 		return fmt.Sprintf("%s:%v", file, line)
+// 	}
+// }
